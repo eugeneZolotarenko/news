@@ -1,18 +1,21 @@
 import './styles/styles.styl'
 
-const apiKey = "f4d8cb8f-16fa-4e9c-93a9-c7266a052d62"
+const apiKey = 'f4d8cb8f-16fa-4e9c-93a9-c7266a052d62'
 let currentPage = 1
 let totalPages
+let keyWord
 let dataArray = []
 
-const dataUrl = `https://content.guardianapis.com/search?from-date=${twoWeeksAgo()}&api-key=${apiKey}&page=${currentPage}`
+let currentUrl
+let defaultUrl = `https://content.guardianapis.com/search?from-date=${twoWeeksAgo()}&api-key=${apiKey}&page=${currentPage}`
 
 const articlesContainer = document.querySelector(".articles")
-// const pagination = document.querySelector(".pagination")
+const searchBar = document.querySelector("form")
+const pagination = document.querySelector(".pagination")
 
 function twoWeeksAgo() {
     const todayDate = new Date()
-    const day = String(todayDate.getDate() - 13).padStart(2, '0')
+    const day = String(todayDate.getDate() - 14).padStart(2, '0')
     const month = String(todayDate.getMonth() + 1).padStart(2, '0')
     const year = todayDate.getFullYear()
     console.log(`${year}-${month}-${day}`)
@@ -45,24 +48,81 @@ function createArticles() {
               <span>${article.sectionName}</span>
               <time>| ${date()}</time>
             </div>
-            <a href="${article.webUrl}">Show more</a>
+            <a href="${article.webUrl}" target="_blank">Show more</a>
           </article>
         `
     }).join("")
     articlesContainer.innerHTML = articles
 }
 
-// function searchForWord() {
+function searchForWord(e) {
+    e.preventDefault() 
+    currentPage = 1
+    dataArray = []
+    const inputText = document.querySelector("[type='text']") 
+    keyWord = inputText.value
+    currentUrl = `https://content.guardianapis.com/search?q=${keyWord}&from-date=${twoWeeksAgo()}&api-key=${apiKey}&page=${currentPage}`
+    if (inputText.value === "") return
+    createItems(currentUrl)
+}
 
-// }
+// 
+// START Pagination
+// 
 
-// function createPagination() {
+function createPagination(page) {
+    console.log(pagination)
+    pagination.innerHTML=`
+        <button class="arrow back"><</button>
+        <button class="integer first" data-i=${page}>${page}</button>
+        <button class="integer" data-i=${page+1}>${page+1}</button>
+        <button class="integer" data-i=${page+2}>${page+2}</button>
+        <button class="integer" data-i=${page+3}>${page+3}</button>
+        <span>...</span>
+        <button class="integer" data-i=${totalPages}>${totalPages}</button>
+        <button class="arrow forward">></button>
+    `
+    console.log(page)
+    pagination.addEventListener('click', paginationIntegers)
+}
 
-// }
+// start integers
 
-async function createItems() {
-    await getData(dataUrl)
+function paginationIntegers(e) {
+    const el = e.target
+    if (!el.matches('.integer')) return
+    currentPage = parseInt(el.dataset.i)
+    console.log(currentPage)
+    if (currentPage > totalPages) return
+    dataArray = []
+
+    // start current page
+    createPagination(currentPage)
+    // end current page
+
+    // start showing new items
+    defaultUrl = `https://content.guardianapis.com/search?from-date=${twoWeeksAgo()}&api-key=${apiKey}&page=${currentPage}`
+    currentUrl = `https://content.guardianapis.com/search?q=${keyWord}&from-date=${twoWeeksAgo()}&api-key=${apiKey}&page=${currentPage}`
+
+    createItems(keyWord == undefined ? defaultUrl : currentUrl, currentPage)
+    // end showing new items
+
+    // if (el.matches('.first') & currentPage >= 2) {
+    //     createPagination(currentPage - 1)
+    // }
+}
+
+// end integers
+
+// 
+// END Pagination
+// 
+
+async function createItems(data = defaultUrl, page = 1) {
+    await getData(data)
     await createArticles()
-    // await createPagination()
+    await createPagination(page)
 }
 createItems()
+
+searchBar.addEventListener("submit", searchForWord)
