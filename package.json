@@ -4,10 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "parcel src/index.html"
+    "dev": "parcel src/index.html",
+    "build": "parcel build src/index.html"
   },
   "keywords": [],
-  "author": "",
+  "author": "Eugene Zolotarenko",
   "license": "ISC",
   "dependencies": {
     "parcel-bundler": "^1.12.4"
