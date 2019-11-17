@@ -1010,20 +1010,22 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var apiKey = 'f4d8cb8f-16fa-4e9c-93a9-c7266a052d62';
 var currentPage = 1;
 var totalPages;
-var keyWord;
+var totalNews;
+var keyWord = "";
 var dataArray = [];
 var currentUrl;
-var defaultUrl = "https://content.guardianapis.com/search?from-date=".concat(twoWeeksAgo(), "&api-key=").concat(apiKey, "&page=").concat(currentPage);
+var defaultUrl = "https://content.guardianapis.com/search?from-date=".concat(twoWeeksAgo(), "&api-key=").concat(apiKey, "&page=").concat(currentPage, "&order-by=newest");
 var articlesContainer = document.querySelector(".articles");
 var searchBar = document.querySelector("form");
 var pagination = document.querySelector(".pagination");
+var numberPage = document.querySelector(".number-page");
+var mainWords = document.querySelector("h1");
 
 function twoWeeksAgo() {
   var todayDate = new Date();
   var day = String(todayDate.getDate() - 14).padStart(2, '0');
   var month = String(todayDate.getMonth() + 1).padStart(2, '0');
   var year = todayDate.getFullYear();
-  console.log("".concat(year, "-").concat(month, "-").concat(day));
   return "".concat(year, "-").concat(month, "-").concat(day);
 }
 
@@ -1052,33 +1054,54 @@ function _getData() {
 
           case 6:
             json = _context.sent;
-            console.log(json.response);
-            totalPages = json.response.total;
-            console.log(totalPages);
+            totalPages = json.response.pages;
+            totalNews = json.response.total;
 
             (_dataArray = dataArray).push.apply(_dataArray, (0, _toConsumableArray2.default)(json.response.results));
 
-            console.log(dataArray);
-            _context.next = 17;
+            _context.next = 15;
             break;
 
-          case 14:
-            _context.prev = 14;
+          case 12:
+            _context.prev = 12;
             _context.t0 = _context["catch"](0);
             console.log(_context.t0);
 
-          case 17:
+          case 15:
           case "end":
             return _context.stop();
         }
       }
-    }, _callee, null, [[0, 14]]);
+    }, _callee, null, [[0, 12]]);
   }));
   return _getData.apply(this, arguments);
 }
 
+function displayMainWords() {
+  if (keyWord == "") {
+    mainWords.innerHTML = "\n        \uD83E\uDD73 ".concat(totalNews, " interesting News for you!\n    ");
+  } else if (totalPages === 0) {
+    mainWords.innerHTML = "\n        \uD83D\uDE22 Nothing about \"".concat(keyWord, "\", try something else!\n    ");
+  } else {
+    mainWords.innerHTML = "\n        \uD83D\uDE18 ".concat(totalNews, " interesting News about \"").concat(keyWord, "\" for you!\n    ");
+  }
+}
+
+function searchForWord(e) {
+  e.preventDefault();
+  dataArray = [];
+  currentPage = 1;
+  var inputText = document.querySelector("[type='text']");
+  keyWord = inputText.value;
+  currentUrl = "https://content.guardianapis.com/search?q=".concat(keyWord, "&from-date=").concat(twoWeeksAgo(), "&api-key=").concat(apiKey, "&page=").concat(currentPage, "&order-by=newest");
+  createItems(keyWord === "" ? defaultUrl : currentUrl);
+  this.reset();
+}
+
+searchBar.addEventListener("submit", searchForWord);
+
 function createArticles() {
-  var articles = dataArray.map(function (article, i) {
+  var articles = dataArray.map(function (article) {
     var date = function date() {
       return article.webPublicationDate.toString().replace(/[t-z]/gi, ' | ');
     };
@@ -1088,50 +1111,68 @@ function createArticles() {
   articlesContainer.innerHTML = articles;
 }
 
-function searchForWord(e) {
-  e.preventDefault();
-  currentPage = 1;
+function displayPageNumber() {
+  if (currentPage === totalPages) {
+    numberPage.classList.remove('hidden');
+    numberPage.innerHTML = "\n        <span>Last page: <strong>".concat(currentPage, "</strong></span>\n    ");
+  } else if (totalPages === 0) {
+    numberPage.classList.add('hidden');
+  } else {
+    numberPage.classList.remove('hidden');
+    numberPage.innerHTML = "\n        <span>Current page: <strong>".concat(currentPage, "</strong> of ").concat(totalPages, "</span>\n    ");
+  }
+}
+
+function createPagination() {
+  if (totalPages <= 1) {
+    pagination.classList.add('hidden');
+  } else {
+    pagination.classList.remove('hidden');
+  }
+
+  pagination.innerHTML = "\n        <button class=\"to-first\">To start: 1</button>\n        <button class=\"previous\">\u2190 Previous</button>\n        <button class=\"forward\">Next \u2192</button>\n        <button class=\"to-last\">To end: ".concat(totalPages, "</button>\n    ");
+  var arrowPrevious = document.querySelector('.previous');
+  var arrowForward = document.querySelector('.forward');
+  var toFirst = document.querySelector('.to-first');
+  var toLast = document.querySelector('.to-last');
+
+  if (currentPage <= 1) {
+    arrowPrevious.classList.add('hidden');
+    toFirst.classList.add('hidden');
+  } else if (currentPage === totalPages) {
+    arrowForward.classList.add('hidden');
+    toLast.classList.add('hidden');
+  }
+}
+
+function paginationItems(e) {
   dataArray = [];
-  var inputText = document.querySelector("[type='text']");
-  keyWord = inputText.value;
-  currentUrl = "https://content.guardianapis.com/search?q=".concat(keyWord, "&from-date=").concat(twoWeeksAgo(), "&api-key=").concat(apiKey, "&page=").concat(currentPage);
-  if (inputText.value === "") return;
-  createItems(currentUrl);
-} // 
-// START Pagination
-// 
-
-
-function createPagination(page) {
-  console.log(pagination);
-  pagination.innerHTML = "\n        <button class=\"arrow back\"><</button>\n        <button class=\"integer first\" data-i=".concat(page, ">").concat(page, "</button>\n        <button class=\"integer\" data-i=").concat(page + 1, ">").concat(page + 1, "</button>\n        <button class=\"integer\" data-i=").concat(page + 2, ">").concat(page + 2, "</button>\n        <button class=\"integer\" data-i=").concat(page + 3, ">").concat(page + 3, "</button>\n        <span>...</span>\n        <button class=\"integer\" data-i=").concat(totalPages, ">").concat(totalPages, "</button>\n        <button class=\"arrow forward\">></button>\n    ");
-  console.log(page);
-  pagination.addEventListener('click', paginationIntegers);
-} // start integers
-
-
-function paginationIntegers(e) {
   var el = e.target;
-  if (!el.matches('.integer')) return;
-  currentPage = parseInt(el.dataset.i);
-  console.log(currentPage);
-  if (currentPage > totalPages) return;
-  dataArray = []; // start current page
+  if (!el.matches('button')) return;
 
-  createPagination(currentPage); // end current page
-  // start showing new items
+  if (el.matches('.previous')) {
+    currentPage -= 1;
+    if (currentPage < 1) return;
+  } else if (el.matches('.forward')) {
+    currentPage = parseInt(currentPage) + 1;
+  } else if (el.matches('.to-first')) {
+    currentPage = 1;
+  } else {
+    currentPage = totalPages;
+  }
 
-  defaultUrl = "https://content.guardianapis.com/search?from-date=".concat(twoWeeksAgo(), "&api-key=").concat(apiKey, "&page=").concat(currentPage);
-  currentUrl = "https://content.guardianapis.com/search?q=".concat(keyWord, "&from-date=").concat(twoWeeksAgo(), "&api-key=").concat(apiKey, "&page=").concat(currentPage);
-  createItems(keyWord == undefined ? defaultUrl : currentUrl, currentPage); // end showing new items
-  // if (el.matches('.first') & currentPage >= 2) {
-  //     createPagination(currentPage - 1)
-  // }
-} // end integers
-// 
-// END Pagination
-// 
+  defaultUrl = "https://content.guardianapis.com/search?from-date=".concat(twoWeeksAgo(), "&api-key=").concat(apiKey, "&page=").concat(currentPage, "&order-by=newest");
+  currentUrl = "https://content.guardianapis.com/search?q=".concat(keyWord, "&from-date=").concat(twoWeeksAgo(), "&api-key=").concat(apiKey, "&page=").concat(currentPage, "&order-by=newest");
+  createItems(keyWord === "" ? defaultUrl : currentUrl);
+  toTop();
+}
 
+pagination.addEventListener('click', paginationItems);
+
+function toTop() {
+  document.body.scrollTop = 0;
+  document.documentElement.scrollTop = 0;
+}
 
 function createItems() {
   return _createItems.apply(this, arguments);
@@ -1142,26 +1183,32 @@ function _createItems() {
   /*#__PURE__*/
   _regenerator.default.mark(function _callee2() {
     var data,
-        page,
         _args2 = arguments;
     return _regenerator.default.wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
             data = _args2.length > 0 && _args2[0] !== undefined ? _args2[0] : defaultUrl;
-            page = _args2.length > 1 && _args2[1] !== undefined ? _args2[1] : 1;
-            _context2.next = 4;
+            _context2.next = 3;
             return getData(data);
 
-          case 4:
-            _context2.next = 6;
+          case 3:
+            _context2.next = 5;
             return createArticles();
 
-          case 6:
-            _context2.next = 8;
-            return createPagination(page);
+          case 5:
+            _context2.next = 7;
+            return createPagination();
 
-          case 8:
+          case 7:
+            _context2.next = 9;
+            return displayMainWords();
+
+          case 9:
+            _context2.next = 11;
+            return displayPageNumber();
+
+          case 11:
           case "end":
             return _context2.stop();
         }
@@ -1172,7 +1219,6 @@ function _createItems() {
 }
 
 createItems();
-searchBar.addEventListener("submit", searchForWord);
 },{"@babel/runtime/regenerator":"../node_modules/@babel/runtime/regenerator/index.js","@babel/runtime/helpers/toConsumableArray":"../node_modules/@babel/runtime/helpers/toConsumableArray.js","@babel/runtime/helpers/asyncToGenerator":"../node_modules/@babel/runtime/helpers/asyncToGenerator.js","./styles/styles.styl":"styles/styles.styl"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -1201,7 +1247,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64051" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "65187" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
