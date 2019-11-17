@@ -12,6 +12,7 @@
   "author": "Eugene Zolotarenko",
   "license": "ISC",
   "dependencies": {
+    "gh-pages": "^1.2.0",
     "parcel-bundler": "^1.12.4"
   },
   "devDependencies": {
